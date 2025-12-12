@@ -1,1 +1,80 @@
-node_modules
+# ----------------------------------------
+# Node & Package Managers
+# ----------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ----------------------------------------
+# Environment Variables (NEVER COMMIT)
+# ----------------------------------------
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+.env.*
+*.env
+
+# ----------------------------------------
+# Next.js / React / Vite / Builds
+# ----------------------------------------
+.next/
+out/
+dist/
+build/
+coverage/
+.cache/
+.vite/
+vite.config.ts.timestamp-*
+*.tsbuildinfo
+
+# ----------------------------------------
+# TypeScript
+# ----------------------------------------
+*.tsbuildinfo
+
+# ----------------------------------------
+# Logs
+# ----------------------------------------
+logs
+*.log
+*.log.*
+.pids
+*.pid
+*.seed
+*.pid.lock
+
+# ----------------------------------------
+# OS / System Files
+# ----------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+Icon?
+ehthumbs.db
+
+# ----------------------------------------
+# Editor / IDE
+# ----------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ----------------------------------------
+# Misc
+# ----------------------------------------
+*.swp
+*.lock
+*.bak
+*.tmp
