@@ -2,18 +2,21 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-// import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 
 export type Call = {
     id: string
-    status: "active" | "completed" | "failed" | "voicemail"
+    status: string
     duration: number
     cost: number
-    created_at: string
-    agent_id: string
-    agents?: {
-        name: string
+    startedAt: string
+    endedAt: string
+    assistant?: {
+        name?: string
+        model?: {
+            model?: string
+        }
     }
+    summary?: string
 }
 
 export const columns: ColumnDef<Call>[] = [
@@ -27,12 +30,15 @@ export const columns: ColumnDef<Call>[] = [
 
             switch (status) {
                 case "active":
-                    variant = "default" // Blue-ish primary
+                case "in-progress":
+                    variant = "default"
                     break
                 case "completed":
-                    variant = "secondary" // Gray/Green depending on theme, maybe outline better
+                case "success":
+                    variant = "secondary"
                     break
                 case "failed":
+                case "error":
                     variant = "destructive"
                     break
                 case "voicemail":
@@ -50,12 +56,12 @@ export const columns: ColumnDef<Call>[] = [
         },
     },
     {
-        accessorKey: "agents.name", // Assuming join
-        header: "Agent",
+        accessorKey: "assistant",
+        header: "Assistant",
         cell: ({ row }) => {
-            // Handle nested data if flattened or handle missing
-            const agentName = row.original.agents?.name || "Unknown Agent"
-            return <div className="font-medium">{agentName}</div>
+            const assistant = row.original.assistant;
+            const name = assistant?.name || "Unknown Agent";
+            return <div className="font-medium">{name}</div>
         },
     },
     {
@@ -83,14 +89,25 @@ export const columns: ColumnDef<Call>[] = [
         },
     },
     {
-        accessorKey: "created_at",
+        accessorKey: "startedAt",
         header: "Date",
         cell: ({ row }) => {
             return (
                 <div className="text-muted-foreground text-sm">
-                    {new Date(row.getValue("created_at")).toLocaleString()}
+                    {new Date(row.getValue("startedAt")).toLocaleString()}
                 </div>
             )
         },
     },
+    {
+        accessorKey: "summary",
+        header: "Summary",
+        cell: ({ row }) => {
+            return (
+                <div className="text-muted-foreground text-sm truncate max-w-[200px]">
+                    {row.getValue("summary") || "-"}
+                </div>
+            )
+        },
+    }
 ]
