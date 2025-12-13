@@ -1,6 +1,6 @@
 import { createClient } from "@/utils/supabase/server"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Activity, CreditCard, DollarSign, Clock } from "lucide-react"
+import { Activity, DollarSign, Clock } from "lucide-react"
 
 export default async function DashboardPage() {
     const supabase = createClient()

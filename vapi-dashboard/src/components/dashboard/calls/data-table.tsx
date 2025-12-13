@@ -6,7 +6,7 @@ import {
     flexRender,
     getCoreRowModel,
     useReactTable,
-    getPaginationRowModel,
+    // getPaginationRowModel,
 } from "@tanstack/react-table"
 import { useRouter } from "next/navigation"
 
@@ -82,7 +82,7 @@ export function DataTable<TData, TValue>({
                                     className="cursor-pointer hover:bg-muted/50"
                                     onClick={() => {
                                         // Type assertion or check id
-                                        // @ts-ignore
+                                        // @ts-expect-error - Row original type is generic
                                         const id = row.original.id
                                         if (id) {
                                             router.push(`/dashboard/calls/${id}`)

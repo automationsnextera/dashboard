@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpDown, MoreHorizontal } from "lucide-react"
+// import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 
 export type Call = {
     id: string

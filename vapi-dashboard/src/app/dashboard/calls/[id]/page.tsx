@@ -83,7 +83,7 @@ export default async function CallDetailsPage({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {transcriptMessages.length > 0 ? (
-                                transcriptMessages.map((msg: any, index: number) => (
+                                transcriptMessages.map((msg: { role: string; message?: string; content?: string; text?: string }, index: number) => (
                                     <div key={index} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                                         <div className={`px-4 py-2 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                             <p className="text-sm">{msg.message || msg.content || msg.text}</p>

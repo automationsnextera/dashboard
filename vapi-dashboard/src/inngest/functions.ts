@@ -11,7 +11,7 @@ const supabase = createClient(
 export const processVapiEvent = inngest.createFunction(
     { id: "process-vapi-event" },
     { event: "vapi/call.event" },
-    async ({ event, step }) => {
+    async ({ event }) => {
         // 1. Safe parsing of the incoming payload
         const message = event.data.message || event.data;
         const call = message.call;
@@ -31,7 +31,7 @@ export const processVapiEvent = inngest.createFunction(
         let clientId = null;
         let agentId = null;
 
-        const { data: existingAgent, error: agentError } = await supabase
+        const { data: existingAgent } = await supabase
             .from("agents")
             .select("id, client_id")
             .eq("vapi_agent_id", vapiAgentId)
