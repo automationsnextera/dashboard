@@ -8,6 +8,7 @@ create table clients (
   slug text unique,
   logo_url text,
   brand_color text,
+  user_id uuid references auth.users(id),
   created_at timestamptz default now()
 );
 
@@ -78,7 +79,17 @@ $$;
 create policy "Users can view their own client"
 on clients for select
 to authenticated
-using ( id = get_auth_client_id() );
+using ( id = get_auth_client_id() or auth.uid() = user_id );
+
+create policy "Allow users to insert their own clients"
+on clients
+for insert
+with check (auth.uid() = user_id);
+
+create policy "Allow users to update their own clients"
+on clients
+for update
+using (auth.uid() = user_id);
 
 -- 2. Users Policies
 -- Users can view themselves and colleagues in the same client.

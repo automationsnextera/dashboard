@@ -82,6 +82,7 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                 const { data: newClient, error: clientError } = await supabase.from('clients').insert({
                     name: companyName,
                     slug: `${slug}-${Math.random().toString(36).substring(2, 7)}`,
+                    user_id: user.id
                 }).select().single();
 
                 if (clientError) {
@@ -91,6 +92,7 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                         console.warn('Slug column missing or error, retrying without it...');
                         const { data: retryClient, error: retryError } = await supabase.from('clients').insert({
                             name: companyName,
+                            user_id: user.id
                         }).select().single();
 
                         if (retryError) {
