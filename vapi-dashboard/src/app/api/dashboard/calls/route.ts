@@ -38,7 +38,7 @@ export async function GET(request: Request) {
             .from('calls')
             .select('*, agents(name)', { count: 'exact' })
             .eq('client_id', profile.client_id)
-            .order('started_at', { ascending: false })
+            .order('created_at', { ascending: false })
             .range(from, to);
 
         if (status && status !== 'all') {
@@ -57,6 +57,15 @@ export async function GET(request: Request) {
         let { data, error, count } = await query;
 
         if (error) throw error;
+
+        // Map data to ensure started_at exists for UI
+        const mappedResults = (data || []).map((c: any) => ({
+            ...c,
+            started_at: c.started_at || c.created_at,
+            duration: c.duration || c.duration_seconds || 0
+        }));
+
+        data = mappedResults;
 
         // Fallback to Vapi if empty
         if ((!data || data.length === 0) && page === 1) {
@@ -84,6 +93,7 @@ export async function GET(request: Request) {
                         vapi_call_id: c.id,
                         status: c.status || 'unknown',
                         started_at: c.startedAt,
+                        created_at: c.createdAt,
                         ended_at: c.endedAt,
                         duration: c.durationMinutes ? c.durationMinutes * 60 : (c.duration || c.duration_seconds || 0),
                         cost: c.cost || 0,
@@ -105,6 +115,7 @@ export async function GET(request: Request) {
                 totalPages: Math.ceil((count || 0) / limit)
             }
         });
+
     } catch (error: any) {
         console.error('Calls API error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });

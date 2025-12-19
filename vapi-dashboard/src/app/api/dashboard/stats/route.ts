@@ -33,8 +33,8 @@ export async function GET(request: Request) {
             .from('calls')
             .select('*')
             .eq('client_id', profile.client_id)
-            .gte('started_at', startDate.toISOString())
-            .order('started_at', { ascending: true });
+            .gte('created_at', startDate.toISOString())
+            .order('created_at', { ascending: true });
 
         if (error) throw error;
 
@@ -66,6 +66,7 @@ export async function GET(request: Request) {
                         duration: c.durationMinutes ? c.durationMinutes * 60 : (c.duration || c.duration_seconds || (c.endedAt && c.startedAt ? (new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000 : 0)),
                         status: c.status || 'unknown',
                         started_at: c.startedAt,
+                        created_at: c.createdAt,
                         ended_at: c.endedAt,
                         transcript: c.transcript || "",
                         summary: c.summary || ""
@@ -79,7 +80,8 @@ export async function GET(request: Request) {
         // 3. Calculate KPIs
         const totalCalls = calls?.length || 0;
         const totalSpend = (calls || []).reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
-        const totalDuration = (calls || []).reduce((sum, c) => sum + (c.duration || 0), 0);
+        // Support both duration and duration_seconds
+        const totalDuration = (calls || []).reduce((sum, c) => sum + (c.duration || c.duration_seconds || 0), 0);
         const avgDuration = totalCalls > 0 ? totalDuration / totalCalls : 0;
         const successCount = (calls || []).filter(c => c.status === 'completed' || c.status === 'ended' || c.status === 'success').length;
         const successRate = totalCalls > 0 ? (successCount / totalCalls) * 100 : 0;
@@ -98,12 +100,16 @@ export async function GET(request: Request) {
         }
 
         (calls || []).forEach(call => {
-            const dateStr = new Date(call.started_at).toLocaleDateString();
-            if (callsPerDay[dateStr] !== undefined) {
-                callsPerDay[dateStr]++;
-                spendPerDay[dateStr] += Number(call.cost) || 0;
+            const timestamp = call.started_at || call.created_at;
+            if (timestamp) {
+                const dateStr = new Date(timestamp).toLocaleDateString();
+                if (callsPerDay[dateStr] !== undefined) {
+                    callsPerDay[dateStr]++;
+                    spendPerDay[dateStr] += Number(call.cost) || 0;
+                }
             }
         });
+
 
         const chartData = Object.keys(callsPerDay)
             .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
