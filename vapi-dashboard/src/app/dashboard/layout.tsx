@@ -1,12 +1,32 @@
+import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { MobileSidebar } from "@/components/dashboard/mobile-sidebar"
 import { UserNav } from "@/components/dashboard/user-nav"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        redirect("/login")
+    }
+
+    // Check if profile is complete
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("client_id")
+        .eq("id", user.id)
+        .single()
+
+    if (!profile?.client_id) {
+        redirect("/onboarding")
+    }
+
     return (
         <div className="flex h-screen overflow-hidden">
             {/* Sidebar for desktop */}

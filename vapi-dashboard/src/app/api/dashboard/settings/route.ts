@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         .single();
 
     if (!profile?.clients) {
-        return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Incomplete profile - client_id missing' }, { status: 404 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

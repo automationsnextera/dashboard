@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         .single();
 
     if (!profile?.client_id) {
-        return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+        return NextResponse.json({ error: 'Incomplete profile - client_id missing' }, { status: 404 });
     }
 
     try {
