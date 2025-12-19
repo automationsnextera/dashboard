@@ -15,16 +15,16 @@ export async function GET(request: Request) {
         .from('profiles')
         .select('*, clients(*)')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
     const { data: settings } = await supabase
         .from('user_settings')
         .select('vapi_api_key')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-    if (!profile?.clients) {
-        return NextResponse.json({ error: 'Incomplete profile - client_id missing' }, { status: 400 });
+    if (!profile) {
+        return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';

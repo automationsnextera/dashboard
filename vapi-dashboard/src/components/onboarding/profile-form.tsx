@@ -114,17 +114,27 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                 updated_at: new Date().toISOString(),
             });
 
-            if (profileError) throw profileError;
+            if (profileError) {
+                console.error('Profile Update Error:', profileError);
+                throw new Error(`Failed to update profile: ${profileError.message}`);
+            }
 
             // 3. Save Vapi API Key
             if (vapiKey) {
-                const { error: settingsError } = await supabase.from('user_settings').upsert({
-                    user_id: user.id,
-                    vapi_api_key: vapiKey,
-                    updated_at: new Date().toISOString(),
-                });
+                try {
+                    const { error: settingsError } = await supabase.from('user_settings').upsert({
+                        user_id: user.id,
+                        vapi_api_key: vapiKey,
+                        updated_at: new Date().toISOString(),
+                    });
 
-                if (settingsError) throw settingsError;
+                    if (settingsError) {
+                        console.error('Settings Update Error:', settingsError);
+                        // We don't throw here to allow the profile to be saved even if settings fail
+                    }
+                } catch (err) {
+                    console.error('Unexpected settings error:', err);
+                }
             }
 
             if (onSave) {
@@ -133,9 +143,9 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                 router.push('/dashboard');
                 router.refresh();
             }
-        } catch (error) {
-            console.error('Error updating profile:', error);
-            alert('Error updating profile');
+        } catch (error: any) {
+            console.error('Detailed Error updating profile:', error);
+            alert(error.message || 'Error updating profile. Please check the console for details.');
         } finally {
             setLoading(false);
         }
