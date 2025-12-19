@@ -85,7 +85,7 @@ export async function GET(request: Request) {
                         status: c.status || 'unknown',
                         started_at: c.startedAt,
                         ended_at: c.endedAt,
-                        duration: c.durationMinutes ? c.durationMinutes * 60 : 0,
+                        duration: c.durationMinutes ? c.durationMinutes * 60 : (c.duration || c.duration_seconds || 0),
                         cost: c.cost || 0,
                         transcript: c.transcript || "",
                         agents: { name: c.assistant?.name || 'Vapi Agent' }

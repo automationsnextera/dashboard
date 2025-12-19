@@ -65,18 +65,31 @@ export async function GET(request: Request) {
         // 2. Fetch Call Stats per Agent
         const { data: stats, error: statsError } = await supabase
             .from('calls')
-            .select('agent_id, status, duration, cost')
+            .select('*')
             .eq('client_id', profile.client_id);
 
         if (statsError) throw statsError;
 
         // 3. Aggregate data
         const agentMetrics = (agents || []).map(agent => {
-            const agentCalls = (stats || []).filter(c => c.agent_id === agent.id || (agent.vapi_agent_id && c.agent_id === agent.vapi_agent_id));
+            // Support both vapi_agent_id and vapi_id from different migrations
+            const vapiId = agent.vapi_agent_id || (agent as any).vapi_id;
+
+            const agentCalls = (stats || []).filter(c =>
+                c.agent_id === agent.id ||
+                (vapiId && c.agent_id === vapiId) ||
+                (vapiId && c.vapi_agent_id === vapiId)
+            );
+
             const totalCalls = agentCalls.length;
             const totalCost = agentCalls.reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
-            const totalDuration = agentCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
-            const successCount = agentCalls.filter(c => c.status === 'completed' || c.status === 'ended').length;
+
+            // Support both duration and duration_seconds
+            const totalDuration = agentCalls.reduce((sum, c) =>
+                sum + (c.duration || c.duration_seconds || 0), 0);
+
+            const successCount = agentCalls.filter(c =>
+                c.status === 'completed' || c.status === 'ended' || c.status === 'success').length;
 
             return {
                 ...agent,
@@ -88,6 +101,7 @@ export async function GET(request: Request) {
                 }
             };
         });
+
 
         return NextResponse.json(agentMetrics);
     } catch (error: any) {

@@ -63,7 +63,7 @@ export async function GET(request: Request) {
                     const mappedCalls = (vapiData || []).map((c: any) => ({
                         id: c.id,
                         cost: c.cost || 0,
-                        duration: c.durationMinutes ? c.durationMinutes * 60 : (c.endedAt && c.startedAt ? (new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000 : 0),
+                        duration: c.durationMinutes ? c.durationMinutes * 60 : (c.duration || c.duration_seconds || (c.endedAt && c.startedAt ? (new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000 : 0)),
                         status: c.status || 'unknown',
                         started_at: c.startedAt,
                         ended_at: c.endedAt,
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
         const totalSpend = (calls || []).reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
         const totalDuration = (calls || []).reduce((sum, c) => sum + (c.duration || 0), 0);
         const avgDuration = totalCalls > 0 ? totalDuration / totalCalls : 0;
-        const successCount = (calls || []).filter(c => c.status === 'completed' || c.status === 'ended').length;
+        const successCount = (calls || []).filter(c => c.status === 'completed' || c.status === 'ended' || c.status === 'success').length;
         const successRate = totalCalls > 0 ? (successCount / totalCalls) * 100 : 0;
 
         // 4. Prepare Chart Data (Calls per day)
