@@ -126,23 +126,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setName(e.target.value)}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="primary-color">Primary Branding Color</Label>
-                            <div className="flex items-center space-x-2">
-                                <Input
-                                    id="primary-color"
-                                    type="color"
-                                    className="w-12 h-10 p-1 bg-transparent"
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                />
-                                <Input
-                                    value={primaryColor}
-                                    onChange={(e) => setPrimaryColor(e.target.value)}
-                                    placeholder="#000000"
-                                />
-                            </div>
-                        </div>
+
                         <Button onClick={handleSaveBranding} disabled={saving} className="w-full">
                             {saving ? "Saving..." : "Save Branding"}
                         </Button>
@@ -177,7 +161,7 @@ export default function SettingsPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Vapi Configuration</CardTitle>
+                        <CardTitle>NextEra Configuration</CardTitle>
                         <CardDescription>Manage your NextEra keys and webhooks.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -204,18 +188,7 @@ export default function SettingsPage() {
                             </p>
                         </div>
 
-                        <div className="space-y-2 pt-2">
-                            <Label>Webhook Endpoint URL</Label>
-                            <div className="flex items-center space-x-2">
-                                <Input value={data.webhookUrl} readOnly className="bg-muted" />
-                                <Button variant="outline" size="icon" onClick={() => copyToClipboard(data.webhookUrl)}>
-                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Paste this into your NextEra Dashboard settings.
-                            </p>
-                        </div>
+
                     </CardContent>
                 </Card>
 
