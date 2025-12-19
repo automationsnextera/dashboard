@@ -28,8 +28,8 @@ export async function GET(request: Request) {
     startDate.setDate(startDate.getDate() - days);
 
     try {
-        // 2. Fetch Call Stats
-        const { data: calls, error } = await supabase
+        // 2. Fetch Call Stats from Supabase
+        let { data: calls, error } = await supabase
             .from('calls')
             .select('*')
             .eq('client_id', profile.client_id)
@@ -38,12 +38,49 @@ export async function GET(request: Request) {
 
         if (error) throw error;
 
+        // 2b. Fallback to direct Vapi API fetch if Supabase is empty
+        if (!calls || calls.length === 0) {
+            console.log("Empty Supabase calls, falling back to Vapi API...");
+            const { data: settings } = await supabase
+                .from('user_settings')
+                .select('vapi_api_key')
+                .eq('user_id', user.id)
+                .single();
+
+            const apiKey = settings?.vapi_api_key;
+            if (apiKey) {
+                const response = await fetch(`https://api.vapi.ai/call?limit=100&createdAtAtGe=${startDate.toISOString()}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const vapiData = await response.json();
+                    calls = (vapiData || []).map((c: any) => ({
+                        id: c.id,
+                        cost: c.cost || 0,
+                        duration: c.durationMinutes ? c.durationMinutes * 60 : (c.endedAt && c.startedAt ? (new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000 : 0),
+                        status: c.status || 'unknown',
+                        started_at: c.startedAt,
+                        ended_at: c.endedAt,
+                        transcript: c.transcript || "",
+                        summary: c.summary || ""
+                    }));
+                    console.log(`Fallback success: found ${calls.length} calls from Vapi.`);
+                }
+            }
+        }
+
         // 3. Calculate KPIs
-        const totalCalls = calls.length;
-        const totalSpend = calls.reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
-        const totalDuration = calls.reduce((sum, c) => sum + (c.duration || 0), 0);
+        const totalCalls = calls?.length || 0;
+        const totalSpend = (calls || []).reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
+        const totalDuration = (calls || []).reduce((sum, c) => sum + (c.duration || 0), 0);
         const avgDuration = totalCalls > 0 ? totalDuration / totalCalls : 0;
-        const successCount = calls.filter(c => c.status === 'completed').length;
+        const successCount = (calls || []).filter(c => c.status === 'completed' || c.status === 'ended').length;
         const successRate = totalCalls > 0 ? (successCount / totalCalls) * 100 : 0;
 
         // 4. Prepare Chart Data (Calls per day)
@@ -51,7 +88,7 @@ export async function GET(request: Request) {
         const spendPerDay: Record<string, number> = {};
 
         // Initialize placeholders for all days in range
-        for (let i = 0; i <= days; i++) {
+        for (let i = 0; i < days; i++) {
             const date = new Date();
             date.setDate(date.getDate() - i);
             const dateStr = date.toLocaleDateString();
@@ -59,7 +96,7 @@ export async function GET(request: Request) {
             spendPerDay[dateStr] = 0;
         }
 
-        calls.forEach(call => {
+        (calls || []).forEach(call => {
             const dateStr = new Date(call.started_at).toLocaleDateString();
             if (callsPerDay[dateStr] !== undefined) {
                 callsPerDay[dateStr]++;
@@ -76,7 +113,7 @@ export async function GET(request: Request) {
             }));
 
         // 5. Status Distribution (Pie Chart)
-        const statusCounts = calls.reduce((acc, c) => {
+        const statusCounts = (calls || []).reduce((acc, c) => {
             const s = c.status || 'unknown';
             acc[s] = (acc[s] || 0) + 1;
             return acc;
@@ -96,7 +133,7 @@ export async function GET(request: Request) {
             },
             chartData,
             pieData,
-            recentCalls: calls.slice(-5).reverse()
+            recentCalls: (calls || []).slice(-5).reverse()
         });
     } catch (error: any) {
         console.error('Stats error:', error);

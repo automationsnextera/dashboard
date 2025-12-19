@@ -23,12 +23,43 @@ export async function GET(request: Request) {
 
     try {
         // 1. Fetch Agents
-        const { data: agents, error: agentsError } = await supabase
+        let { data: agents, error: agentsError } = await supabase
             .from('agents')
             .select('*')
             .eq('client_id', profile.client_id);
 
         if (agentsError) throw agentsError;
+
+        // 1b. Fallback to Vapi if empty
+        if (!agents || agents.length === 0) {
+            const { data: settings } = await supabase
+                .from('user_settings')
+                .select('vapi_api_key')
+                .eq('user_id', user.id)
+                .single();
+
+            const apiKey = settings?.vapi_api_key;
+            if (apiKey) {
+                const response = await fetch('https://api.vapi.ai/assistant', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const vapiData = await response.json();
+                    agents = (vapiData || []).map((a: any) => ({
+                        id: a.id,
+                        vapi_agent_id: a.id,
+                        name: a.name || 'Unnamed Agent',
+                        client_id: profile.client_id
+                    }));
+                }
+            }
+        }
 
         // 2. Fetch Call Stats per Agent
         const { data: stats, error: statsError } = await supabase
@@ -39,12 +70,12 @@ export async function GET(request: Request) {
         if (statsError) throw statsError;
 
         // 3. Aggregate data
-        const agentMetrics = agents.map(agent => {
-            const agentCalls = stats.filter(c => c.agent_id === agent.id);
+        const agentMetrics = (agents || []).map(agent => {
+            const agentCalls = (stats || []).filter(c => c.agent_id === agent.id || (agent.vapi_agent_id && c.agent_id === agent.vapi_agent_id));
             const totalCalls = agentCalls.length;
             const totalCost = agentCalls.reduce((sum, c) => sum + (Number(c.cost) || 0), 0);
             const totalDuration = agentCalls.reduce((sum, c) => sum + (c.duration || 0), 0);
-            const successCount = agentCalls.filter(c => c.status === 'completed').length;
+            const successCount = agentCalls.filter(c => c.status === 'completed' || c.status === 'ended').length;
 
             return {
                 ...agent,

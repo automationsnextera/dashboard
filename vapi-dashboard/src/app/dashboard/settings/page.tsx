@@ -112,26 +112,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Branding & Identity</CardTitle>
-                        <CardDescription>Customize your client dashboard appearance.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="organization-name">Organization Name</Label>
-                            <Input
-                                id="organization-name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                            />
-                        </div>
 
-                        <Button onClick={handleSaveBranding} disabled={saving} className="w-full">
-                            {saving ? "Saving..." : "Save Branding"}
-                        </Button>
-                    </CardContent>
-                </Card>
 
                 <Card>
                     <CardHeader>

@@ -54,9 +54,46 @@ export async function GET(request: Request) {
             query = query.or(`transcript.ilike.%${search}%,status.ilike.%${search}%`);
         }
 
-        const { data, error, count } = await query;
+        let { data, error, count } = await query;
 
         if (error) throw error;
+
+        // Fallback to Vapi if empty
+        if ((!data || data.length === 0) && page === 1) {
+            const { data: settings } = await supabase
+                .from('user_settings')
+                .select('vapi_api_key')
+                .eq('user_id', user.id)
+                .single();
+
+            const apiKey = settings?.vapi_api_key;
+            if (apiKey) {
+                const response = await fetch(`https://api.vapi.ai/call?limit=${limit}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const vapiData = await response.json();
+                    data = (vapiData || []).map((c: any) => ({
+                        id: c.id,
+                        vapi_call_id: c.id,
+                        status: c.status || 'unknown',
+                        started_at: c.startedAt,
+                        ended_at: c.endedAt,
+                        duration: c.durationMinutes ? c.durationMinutes * 60 : 0,
+                        cost: c.cost || 0,
+                        transcript: c.transcript || "",
+                        agents: { name: c.assistant?.name || 'Vapi Agent' }
+                    }));
+                    count = data.length;
+                }
+            }
+        }
 
         return NextResponse.json({
             data,
