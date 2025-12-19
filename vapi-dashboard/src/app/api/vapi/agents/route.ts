@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const apiKey = process.env.VAPI_PRIVATE_KEY ?? process.env.VAPI_API_KEY;
 
