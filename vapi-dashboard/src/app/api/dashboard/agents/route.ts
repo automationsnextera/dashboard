@@ -63,12 +63,46 @@ export async function GET(request: Request) {
         }
 
         // 2. Fetch Call Stats per Agent
-        const { data: stats, error: statsError } = await supabase
+        let { data: stats, error: statsError } = await supabase
             .from('calls')
             .select('*')
             .eq('client_id', profile.client_id);
 
         if (statsError) throw statsError;
+
+        // 2b. Fallback for stats if empty
+        if (!stats || stats.length === 0) {
+            const { data: settings } = await supabase
+                .from('user_settings')
+                .select('vapi_api_key')
+                .eq('user_id', user.id)
+                .single();
+
+            const apiKey = settings?.vapi_api_key;
+            if (apiKey) {
+                const response = await fetch('https://api.vapi.ai/call?limit=1000', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const vapiData = await response.json();
+                    const mappedStats = (vapiData || []).map((c: any) => ({
+                        id: c.id,
+                        cost: c.cost || 0,
+                        duration: c.durationMinutes ? c.durationMinutes * 60 : (c.duration || c.duration_seconds || 0),
+                        status: c.status || 'unknown',
+                        agent_id: c.assistantId || c.assistant_id,
+                        vapi_agent_id: c.assistantId || c.assistant_id
+                    }));
+                    stats = mappedStats;
+                }
+            }
+        }
 
         // 3. Aggregate data
         const agentMetrics = (agents || []).map(agent => {

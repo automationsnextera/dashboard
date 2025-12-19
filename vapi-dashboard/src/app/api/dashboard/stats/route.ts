@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 
             const apiKey = settings?.vapi_api_key;
             if (apiKey) {
-                const response = await fetch(`https://api.vapi.ai/call?limit=100&createdAtAtGe=${startDate.toISOString()}`, {
+                const response = await fetch(`https://api.vapi.ai/call?limit=1000&createdAtGe=${startDate.toISOString()}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${apiKey}`,
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
         for (let i = 0; i < days; i++) {
             const date = new Date();
             date.setDate(date.getDate() - i);
-            const dateStr = date.toLocaleDateString();
+            const dateStr = date.toLocaleDateString('en-US');
             callsPerDay[dateStr] = 0;
             spendPerDay[dateStr] = 0;
         }
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
         (calls || []).forEach(call => {
             const timestamp = call.started_at || call.created_at;
             if (timestamp) {
-                const dateStr = new Date(timestamp).toLocaleDateString();
+                const dateStr = new Date(timestamp).toLocaleDateString('en-US');
                 if (callsPerDay[dateStr] !== undefined) {
                     callsPerDay[dateStr]++;
                     spendPerDay[dateStr] += Number(call.cost) || 0;
