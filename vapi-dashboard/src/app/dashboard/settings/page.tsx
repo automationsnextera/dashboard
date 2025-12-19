@@ -155,7 +155,7 @@ export default function SettingsPage() {
                                         id="vapi-key"
                                         type="password"
                                         className="pl-9"
-                                        placeholder="vapi-xxx-xxx"
+                                        placeholder="nextera-xxx-xxx"
                                         value={vapiKey}
                                         onChange={(e) => setVapiKey(e.target.value)}
                                     />
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                                 </Button>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Your private key is used to fetch call data from Vapi.
+                                Your private key is used to fetch call data from your AI agents.
                             </p>
                         </div>
 

@@ -241,7 +241,7 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                         <Input
                             id="vapi-key"
                             type="password"
-                            placeholder="vapi-xxx-xxx"
+                            placeholder="nextera-xxx-xxx"
                             value={vapiKey}
                             onChange={(e) => setVapiKey(e.target.value)}
                             required
