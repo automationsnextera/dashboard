@@ -151,10 +151,10 @@ export default function DashboardPage() {
                         <CardTitle>Calls Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <div className="h-[300px]">
+                        <div className="h-[300px] w-full min-h-[300px]">
                             {isMounted ? (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={chartData}>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                                    <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                         <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                                         <Tooltip />
@@ -173,9 +173,9 @@ export default function DashboardPage() {
                         <CardTitle>Call Status Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px]">
+                        <div className="h-[300px] w-full min-h-[300px]">
                             {isMounted ? (
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                                     <PieChart>
                                         <Pie
                                             data={pieData}

@@ -24,7 +24,7 @@ export default async function OnboardingPage() {
         .eq('user_id', user.id)
         .single();
 
-    if (profile?.full_name && profile?.company_name && profile?.use_case && settings?.vapi_api_key) {
+    if (profile?.full_name && profile?.company_name && profile?.use_case && settings?.vapi_api_key && profile?.client_id) {
         redirect('/dashboard');
     }
 
