@@ -13,16 +13,25 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ProfileFormProps {
     user: User;
+    initialData?: {
+        full_name: string | null;
+        company_name: string | null;
+        use_case: string | null;
+        avatar_url: string | null;
+        vapi_api_key?: string | null;
+    };
+    onSave?: () => void;
 }
 
-export default function ProfileForm({ user }: ProfileFormProps) {
+export default function ProfileForm({ user, initialData, onSave }: ProfileFormProps) {
     const router = useRouter();
     const supabase = createClient();
     const [loading, setLoading] = useState(false);
-    const [fullName, setFullName] = useState(user.user_metadata?.full_name || '');
-    const [companyName, setCompanyName] = useState('');
-    const [useCase, setUseCase] = useState('');
-    const [avatarUrl, setAvatarUrl] = useState<string | null>(user.user_metadata?.avatar_url || null);
+    const [fullName, setFullName] = useState(initialData?.full_name || user.user_metadata?.full_name || '');
+    const [companyName, setCompanyName] = useState(initialData?.company_name || '');
+    const [useCase, setUseCase] = useState(initialData?.use_case || '');
+    const [vapiKey, setVapiKey] = useState(initialData?.vapi_api_key || '');
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(initialData?.avatar_url || user.user_metadata?.avatar_url || null);
     const [uploading, setUploading] = useState(false);
 
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,7 +70,8 @@ export default function ProfileForm({ user }: ProfileFormProps) {
         setLoading(true);
 
         try {
-            const { error } = await supabase.from('profiles').upsert({
+            // Save Profile
+            const { error: profileError } = await supabase.from('profiles').upsert({
                 id: user.id,
                 full_name: fullName,
                 company_name: companyName,
@@ -70,10 +80,25 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                 updated_at: new Date().toISOString(),
             });
 
-            if (error) throw error;
+            if (profileError) throw profileError;
 
-            router.push('/dashboard');
-            router.refresh();
+            // Save Vapi API Key
+            if (vapiKey) {
+                const { error: settingsError } = await supabase.from('user_settings').upsert({
+                    user_id: user.id,
+                    vapi_api_key: vapiKey,
+                    updated_at: new Date().toISOString(),
+                });
+
+                if (settingsError) throw settingsError;
+            }
+
+            if (onSave) {
+                onSave();
+            } else {
+                router.push('/dashboard');
+                router.refresh();
+            }
         } catch (error) {
             console.error('Error updating profile:', error);
             alert('Error updating profile');
@@ -146,18 +171,6 @@ export default function ProfileForm({ user }: ProfileFormProps) {
 
                     <div className="space-y-2">
                         <Label htmlFor="use-case">Primary Use Case</Label>
-                        {/* Note: If Select component is not available or has issues, we can fallback to native select, 
-                but based on file list, `select.tsx` was NOT in the list, so I will check if I can use standard select or simpler dropdown. 
-                Wait, I listed dir `components/ui` and `dropdown-menu.tsx` was there, but `select.tsx` was NOT.
-                I will use standard HTML select to avoid compilation errors if Select component is missing.
-                Actually, `dropdown-menu` is for actions. 
-                I will use strict HTML <select> for safety or just a text input for now, 
-                OR I should check if I missed `select.tsx`.
-                Let me quickly double check the list_dir output from Step 32.
-                Files: avatar, badge, button, card, dropdown-menu, input, label, separator, sheet, skeleton, switch, table.
-                NO select.tsx.
-                So I will use a standard HTML select with Shadcn-like styling.
-            */}
                         <select
                             id="use-case"
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -172,14 +185,29 @@ export default function ProfileForm({ user }: ProfileFormProps) {
                             <option value="Other">Other</option>
                         </select>
                     </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="vapi-key">Vapi Private API Key</Label>
+                        <Input
+                            id="vapi-key"
+                            type="password"
+                            placeholder="vapi-xxx-xxx"
+                            value={vapiKey}
+                            onChange={(e) => setVapiKey(e.target.value)}
+                            required
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            You can find your private key in your Vapi dashboard under Settings &rarr; API Keys.
+                        </p>
+                    </div>
                 </CardContent>
                 <CardFooter>
                     <Button type="submit" className="w-full" disabled={loading}>
                         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Profile
+                        Save Configuration
                     </Button>
                 </CardFooter>
             </form>
-        </Card>
+        </Card >
     );
 }
