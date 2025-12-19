@@ -1,18 +1,36 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET() {
     console.log("----------------------------------------");
     console.log("1. API Route /api/vapi/stats hit");
 
-    // CHECK 1: Is the API Key loaded?
-    const apiKey = process.env.VAPI_API_KEY;
+    const supabase = createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (!apiKey) {
-        console.error("❌ ERROR: VAPI_API_KEY is undefined. Check your .env.local file and restart server.");
-        return NextResponse.json({ error: "Server Configuration Error: Missing API Key" }, { status: 500 });
+    if (authError || !user) {
+        console.error("❌ Unauthorized access attempt");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("2. API Key found (starts with):", apiKey.substring(0, 4) + "...");
+    // CHECK 1: Is the API Key in user_settings?
+    const { data: settings } = await supabase
+        .from('user_settings')
+        .select('vapi_api_key')
+        .eq('user_id', user.id)
+        .single();
+
+    const apiKey = settings?.vapi_api_key;
+
+    if (!apiKey) {
+        console.error("❌ ERROR: No Vapi API Key found for user", user.id);
+        return NextResponse.json({
+            error: "Configuration Required",
+            message: "Please add your Vapi API Key in Settings or Onboarding."
+        }, { status: 400 });
+    }
+
+    console.log("2. API Key found for user.");
 
     try {
         console.log("3. Sending request to Vapi...");

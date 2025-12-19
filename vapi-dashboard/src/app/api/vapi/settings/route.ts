@@ -1,19 +1,35 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@/utils/supabase/server';
 
 export async function GET() {
-    // In a real app, this might fetch from VAPI /account endpoint or just return safe env vars
-    // For now, we will return some safe configuration status
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    const hasApiKey = !!(process.env.VAPI_PRIVATE_KEY ?? process.env.VAPI_API_KEY);
+    let hasApiKey = false;
+
+    if (user) {
+        const { data: settings } = await supabase
+            .from('user_settings')
+            .select('vapi_api_key')
+            .eq('user_id', user.id)
+            .single();
+
+        hasApiKey = !!settings?.vapi_api_key;
+        // WARNING: Exposing the key to the client so it can initialize Vapi SDK.
+        // Ensure this endpoint is protected (it is, by the user check above).
+        if (settings?.vapi_api_key) {
+            // @ts-ignore
+            return NextResponse.json({
+                hasVapiKey: true,
+                vapiKey: settings.vapi_api_key,
+                version: "1.0.0"
+            });
+        }
+    }
 
     return NextResponse.json({
-        environment: process.env.NODE_ENV,
         hasVapiKey: hasApiKey,
-        features: {
-            analytics: true,
-            callRecording: true,
-            realtimeTranscripts: true
-        },
+        vapiKey: null,
         version: "1.0.0"
     });
 }
