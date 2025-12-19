@@ -18,3 +18,16 @@ create policy "Users can insert their own settings."
 create policy "Users can update their own settings."
   on user_settings for update
   using ( auth.uid() = user_id );
+
+-- Clients Table RLS Policies
+-- Allow authenticated users to create a client tenant
+CREATE POLICY "Users can create their own client" 
+ON clients FOR INSERT 
+TO authenticated 
+WITH CHECK (true);
+
+-- Allow users to update their own client details
+CREATE POLICY "Users can update their own client" 
+ON clients FOR UPDATE 
+TO authenticated 
+USING (id IN (SELECT client_id FROM profiles WHERE id = auth.uid()));

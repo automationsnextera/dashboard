@@ -85,14 +85,18 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                 }).select().single();
 
                 if (clientError) {
+                    console.error('Detailed Client Creation Error:', clientError);
                     // Fallback: If 'slug' column is missing, try inserting without it
-                    if (clientError.code === 'PGRST204' || clientError.message.includes('slug')) {
-                        console.warn('Slug column missing, retrying without it...');
+                    if (clientError.code === '42703' || clientError.message.includes('slug')) {
+                        console.warn('Slug column missing or error, retrying without it...');
                         const { data: retryClient, error: retryError } = await supabase.from('clients').insert({
                             name: companyName,
                         }).select().single();
 
-                        if (retryError) throw retryError;
+                        if (retryError) {
+                            console.error('Retry Client Creation Error:', retryError);
+                            throw retryError;
+                        }
                         currentClientId = retryClient.id;
                     } else {
                         throw clientError;
