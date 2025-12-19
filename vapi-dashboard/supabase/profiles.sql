@@ -5,6 +5,8 @@ create table profiles (
   avatar_url text,
   company_name text,
   use_case text,
+  client_id uuid references clients(id),
+  role text,
   updated_at timestamptz,
 
   constraint full_name_length check (char_length(full_name) >= 3)

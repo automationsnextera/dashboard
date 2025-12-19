@@ -5,6 +5,7 @@ create extension if not exists "uuid-ossp";
 create table clients (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  slug text unique,
   logo_url text,
   brand_color text,
   created_at timestamptz default now()
