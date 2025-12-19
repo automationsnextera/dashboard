@@ -79,7 +79,7 @@ export async function GET(request: Request) {
 
                 if (response.ok) {
                     const vapiData = await response.json();
-                    data = (vapiData || []).map((c: any) => ({
+                    const mappedData = (vapiData || []).map((c: any) => ({
                         id: c.id,
                         vapi_call_id: c.id,
                         status: c.status || 'unknown',
@@ -90,13 +90,14 @@ export async function GET(request: Request) {
                         transcript: c.transcript || "",
                         agents: { name: c.assistant?.name || 'Vapi Agent' }
                     }));
-                    count = data.length;
+                    data = mappedData;
+                    count = mappedData.length;
                 }
             }
         }
 
         return NextResponse.json({
-            data,
+            data: data || [],
             pagination: {
                 total: count,
                 page,

@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 
                 if (response.ok) {
                     const vapiData = await response.json();
-                    calls = (vapiData || []).map((c: any) => ({
+                    const mappedCalls = (vapiData || []).map((c: any) => ({
                         id: c.id,
                         cost: c.cost || 0,
                         duration: c.durationMinutes ? c.durationMinutes * 60 : (c.endedAt && c.startedAt ? (new Date(c.endedAt).getTime() - new Date(c.startedAt).getTime()) / 1000 : 0),
@@ -70,7 +70,8 @@ export async function GET(request: Request) {
                         transcript: c.transcript || "",
                         summary: c.summary || ""
                     }));
-                    console.log(`Fallback success: found ${calls.length} calls from Vapi.`);
+                    calls = mappedCalls;
+                    console.log(`Fallback success: found ${mappedCalls.length} calls from Vapi.`);
                 }
             }
         }

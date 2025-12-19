@@ -51,12 +51,13 @@ export async function GET(request: Request) {
 
                 if (response.ok) {
                     const vapiData = await response.json();
-                    agents = (vapiData || []).map((a: any) => ({
+                    const mappedAgents = (vapiData || []).map((a: any) => ({
                         id: a.id,
                         vapi_agent_id: a.id,
                         name: a.name || 'Unnamed Agent',
                         client_id: profile.client_id
                     }));
+                    agents = mappedAgents;
                 }
             }
         }
