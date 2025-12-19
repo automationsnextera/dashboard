@@ -12,7 +12,7 @@ type SidebarProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname()
-    const [clientName, setClientName] = useState("Vapi Dashboard")
+    const [clientName, setClientName] = useState("NextEra Dashboard")
 
     useEffect(() => {
         const fetchClient = async () => {

@@ -123,7 +123,7 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                 throw new Error(`Failed to update profile: ${profileError.message}`);
             }
 
-            // 3. Save Vapi API Key
+            // 3. Save NextEra Key
             if (vapiKey) {
                 try {
                     const { error: settingsError } = await supabase.from('user_settings').upsert({
@@ -235,7 +235,7 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="vapi-key">Vapi Private API Key</Label>
+                        <Label htmlFor="vapi-key">NextEra Private API Key</Label>
                         <Input
                             id="vapi-key"
                             type="password"

@@ -44,7 +44,7 @@ export const VapiProvider = ({ children }: { children: React.ReactNode }) => {
                     setIsReady(true);
                     setIsMissingKey(false);
                 } else {
-                    console.warn("Vapi API Key missing for user.");
+                    console.warn("NextEra Key missing for user.");
                     setIsMissingKey(true);
                     setIsReady(false);
                 }

@@ -98,7 +98,7 @@ export default function DashboardPage() {
                         <div className="ml-3">
                             <h3 className="text-sm font-medium text-yellow-800">Action Required: API Key Missing</h3>
                             <div className="mt-2 text-sm text-yellow-700">
-                                <p>You have not configured your Vapi API Key yet. The dashboard cannot fetch your call statistics.</p>
+                                <p>You have not configured your NextEra Key yet. The dashboard cannot fetch your call statistics.</p>
                             </div>
                             <div className="mt-4">
                                 <div className="-mx-2 -my-1.5 flex">

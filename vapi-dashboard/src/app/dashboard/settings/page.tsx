@@ -178,7 +178,7 @@ export default function SettingsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Vapi Configuration</CardTitle>
-                        <CardDescription>Manage your Vapi API keys and webhooks.</CardDescription>
+                        <CardDescription>Manage your NextEra keys and webhooks.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
@@ -213,7 +213,7 @@ export default function SettingsPage() {
                                 </Button>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Paste this into your Vapi Dashboard settings.
+                                Paste this into your NextEra Dashboard settings.
                             </p>
                         </div>
                     </CardContent>

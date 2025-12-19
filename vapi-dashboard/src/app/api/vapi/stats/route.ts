@@ -23,10 +23,10 @@ export async function GET() {
     const apiKey = settings?.vapi_api_key;
 
     if (!apiKey) {
-        console.error("❌ ERROR: No Vapi API Key found for user", user.id);
+        console.error("❌ ERROR: No NextEra Key found for user", user.id);
         return NextResponse.json({
             error: "Configuration Required",
-            message: "Please add your Vapi API Key in Settings or Onboarding."
+            message: "Please add your NextEra Key in Settings or Onboarding."
         }, { status: 400 });
     }
 
@@ -47,7 +47,7 @@ export async function GET() {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error("❌ Vapi API returned error:", errorText);
+            console.error("❌ NextEra returned error:", errorText);
             return NextResponse.json({ error: `Vapi Error: ${errorText}` }, { status: response.status });
         }
 
