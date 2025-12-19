@@ -21,6 +21,8 @@ export function Sidebar({ className }: SidebarProps) {
                 if (res.ok) {
                     const data = await res.json()
                     setClientName(data.client.name)
+                } else if (res.status === 400) {
+                    console.warn("Client profile incomplete, using default name.")
                 }
             } catch (error) {
                 console.error("Error fetching client for sidebar:", error)

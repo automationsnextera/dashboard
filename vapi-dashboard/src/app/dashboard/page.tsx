@@ -37,6 +37,10 @@ export default function DashboardPage() {
                 if (res.ok) {
                     const data = await res.json()
                     setStats(data)
+                } else if (res.status === 400) {
+                    console.error("Incomplete profile detected")
+                    // If the profile is incomplete, the layout should technically redirect,
+                    // but we handle it here just in case.
                 }
             } catch (error) {
                 console.error("Error fetching stats:", error)
@@ -151,10 +155,10 @@ export default function DashboardPage() {
                         <CardTitle>Calls Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <div className="h-[300px] w-full min-h-[300px]">
-                            {isMounted ? (
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                                    <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <div className="h-[350px] w-full min-h-[350px] relative overflow-hidden">
+                            {isMounted && chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                         <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                                         <Tooltip />
@@ -162,6 +166,8 @@ export default function DashboardPage() {
                                         <Line type="monotone" dataKey="spend" stroke="#10b981" strokeWidth={2} />
                                     </LineChart>
                                 </ResponsiveContainer>
+                            ) : chartData.length === 0 && !loading ? (
+                                <div className="h-full w-full flex items-center justify-center text-muted-foreground">No data available for this period.</div>
                             ) : (
                                 <div className="h-full w-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
                             )}
@@ -173,9 +179,9 @@ export default function DashboardPage() {
                         <CardTitle>Call Status Distribution</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[300px] w-full min-h-[300px]">
-                            {isMounted ? (
-                                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                        <div className="h-[300px] w-full min-h-[300px] relative overflow-hidden">
+                            {isMounted && pieData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
                                             data={pieData}
@@ -194,6 +200,8 @@ export default function DashboardPage() {
                                         <Tooltip />
                                     </PieChart>
                                 </ResponsiveContainer>
+                            ) : pieData.length === 0 && !loading ? (
+                                <div className="h-full w-full flex items-center justify-center text-muted-foreground">No data available.</div>
                             ) : (
                                 <div className="h-full w-full flex items-center justify-center text-muted-foreground">Loading chart...</div>
                             )}

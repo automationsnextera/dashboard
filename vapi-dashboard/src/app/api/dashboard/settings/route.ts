@@ -17,8 +17,14 @@ export async function GET(request: Request) {
         .eq('id', user.id)
         .single();
 
+    const { data: settings } = await supabase
+        .from('user_settings')
+        .select('vapi_api_key')
+        .eq('user_id', user.id)
+        .single();
+
     if (!profile?.clients) {
-        return NextResponse.json({ error: 'Incomplete profile - client_id missing' }, { status: 404 });
+        return NextResponse.json({ error: 'Incomplete profile - client_id missing' }, { status: 400 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -30,6 +36,7 @@ export async function GET(request: Request) {
             role: profile.role,
             fullName: profile.full_name
         },
+        vapi_api_key: settings?.vapi_api_key || null,
         webhookUrl
     });
 }
@@ -54,18 +61,32 @@ export async function PATCH(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, branding } = body;
+        const { name, branding, vapi_api_key } = body;
 
-        const { error } = await supabase
-            .from('clients')
-            .update({
-                name,
-                branding,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', profile.client_id);
+        if (name || branding) {
+            const { error: clientError } = await supabase
+                .from('clients')
+                .update({
+                    name,
+                    branding,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', profile.client_id);
 
-        if (error) throw error;
+            if (clientError) throw clientError;
+        }
+
+        if (vapi_api_key !== undefined) {
+            const { error: settingsError } = await supabase
+                .from('user_settings')
+                .upsert({
+                    user_id: user.id,
+                    vapi_api_key,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (settingsError) throw settingsError;
+        }
 
         return NextResponse.json({ success: true });
     } catch (error: any) {

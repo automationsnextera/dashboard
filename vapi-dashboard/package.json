@@ -20,19 +20,20 @@
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.87.1",
     "@tanstack/react-table": "^8.21.3",
+    "autoprefixer": "^10.4.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "inngest": "^3.47.0",
     "lucide-react": "^0.560.0",
     "next": "14.2.33",
+    "next-themes": "^0.4.6",
+    "postcss": "^8",
     "react": "^18",
     "react-dom": "^18",
     "recharts": "^3.5.1",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss-animate": "^1.0.7",
     "tailwindcss": "^3.4.1",
-    "postcss": "^8",
-    "autoprefixer": "^10.4.23"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",

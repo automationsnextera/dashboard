@@ -84,8 +84,22 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
                     slug: `${slug}-${Math.random().toString(36).substring(2, 7)}`,
                 }).select().single();
 
-                if (clientError) throw clientError;
-                currentClientId = newClient.id;
+                if (clientError) {
+                    // Fallback: If 'slug' column is missing, try inserting without it
+                    if (clientError.code === 'PGRST204' || clientError.message.includes('slug')) {
+                        console.warn('Slug column missing, retrying without it...');
+                        const { data: retryClient, error: retryError } = await supabase.from('clients').insert({
+                            name: companyName,
+                        }).select().single();
+
+                        if (retryError) throw retryError;
+                        currentClientId = retryClient.id;
+                    } else {
+                        throw clientError;
+                    }
+                } else {
+                    currentClientId = newClient.id;
+                }
             }
 
             // 2. Save/Update Profile

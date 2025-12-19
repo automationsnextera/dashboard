@@ -21,12 +21,18 @@ interface SettingsData {
     version: string
 }
 
+import { Moon, Sun, Key, Copy, Check } from "lucide-react"
+import { useTheme } from "next-themes"
+
 export default function SettingsPage() {
+    const { theme, setTheme } = useTheme()
     const [data, setData] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [name, setName] = useState("")
     const [primaryColor, setPrimaryColor] = useState("#3b82f6")
+    const [vapiKey, setVapiKey] = useState("")
+    const [copied, setCopied] = useState(false)
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -37,6 +43,7 @@ export default function SettingsPage() {
                     setData(json)
                     setName(json.client.name)
                     setPrimaryColor(json.client.branding?.primaryColor || "#3b82f6")
+                    setVapiKey(json.vapi_api_key || "")
                 }
             } catch (error) {
                 console.error("Error fetching settings:", error)
@@ -47,7 +54,7 @@ export default function SettingsPage() {
         fetchSettings()
     }, [])
 
-    const handleSave = async () => {
+    const handleSaveBranding = async () => {
         setSaving(true)
         try {
             const res = await fetch("/api/dashboard/settings", {
@@ -59,13 +66,39 @@ export default function SettingsPage() {
                 })
             })
             if (res.ok) {
-                alert("Settings saved successfully!")
+                alert("Branding saved successfully!")
             }
         } catch (error) {
-            console.error("Error saving settings:", error)
+            console.error("Error saving branding:", error)
         } finally {
             setSaving(false)
         }
+    }
+
+    const handleSaveApiKey = async () => {
+        setSaving(true)
+        try {
+            const res = await fetch("/api/dashboard/settings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    vapi_api_key: vapiKey
+                })
+            })
+            if (res.ok) {
+                alert("API Key saved successfully!")
+            }
+        } catch (error) {
+            console.error("Error saving API Key:", error)
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     if (loading) return <div className="p-8 text-center">Loading settings...</div>
@@ -75,7 +108,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-                <p className="text-muted-foreground">Manage your white-label branding and API configurations.</p>
+                <p className="text-muted-foreground">Manage your white-label branding, appearance, and API configurations.</p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -86,9 +119,9 @@ export default function SettingsPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="client-name">Organization Name</Label>
+                            <Label htmlFor="organization-name">Organization Name</Label>
                             <Input
-                                id="client-name"
+                                id="organization-name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
@@ -99,17 +132,18 @@ export default function SettingsPage() {
                                 <Input
                                     id="primary-color"
                                     type="color"
-                                    className="w-12 h-10 p-1"
+                                    className="w-12 h-10 p-1 bg-transparent"
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
                                 />
                                 <Input
                                     value={primaryColor}
                                     onChange={(e) => setPrimaryColor(e.target.value)}
+                                    placeholder="#000000"
                                 />
                             </div>
                         </div>
-                        <Button onClick={handleSave} disabled={saving}>
+                        <Button onClick={handleSaveBranding} disabled={saving} className="w-full">
                             {saving ? "Saving..." : "Save Branding"}
                         </Button>
                     </CardContent>
@@ -117,36 +151,78 @@ export default function SettingsPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Vapi Integration</CardTitle>
-                        <CardDescription>Configure your analytics data source.</CardDescription>
+                        <CardTitle>Appearance</CardTitle>
+                        <CardDescription>Customize how the dashboard looks for you.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Webhook Endpoint URL</Label>
+                        <div className="flex items-center justify-between space-x-2">
+                            <Label htmlFor="dark-mode" className="flex flex-col space-y-1">
+                                <span>Dark Mode</span>
+                                <span className="font-normal text-xs text-muted-foreground">
+                                    Switch between light and dark themes.
+                                </span>
+                            </Label>
                             <div className="flex items-center space-x-2">
-                                <Input value={data.webhookUrl} readOnly />
-                                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(data.webhookUrl)}>
-                                    Copy
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                                Paste this into your Vapi Dashboard &rarr; Assistants &rarr; Webhooks or the global Webhook settings.
-                            </p>
-                        </div>
-                        <div className="pt-2">
-                            <p className="text-sm font-medium">Data Sync Status</p>
-                            <div className="flex items-center space-x-2 mt-1">
-                                <div className="h-2 w-2 rounded-full bg-green-500" />
-                                <span className="text-xs text-muted-foreground">Actively receiving Vapi events</span>
+                                <Sun className="h-4 w-4 text-muted-foreground" />
+                                <Switch
+                                    id="dark-mode"
+                                    checked={theme === "dark"}
+                                    onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                                />
+                                <Moon className="h-4 w-4 text-muted-foreground" />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="md:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Vapi Configuration</CardTitle>
+                        <CardDescription>Manage your Vapi API keys and webhooks.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="vapi-key">Private API Key</Label>
+                            <div className="flex items-center space-x-2">
+                                <div className="relative flex-1">
+                                    <Key className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="vapi-key"
+                                        type="password"
+                                        className="pl-9"
+                                        placeholder="vapi-xxx-xxx"
+                                        value={vapiKey}
+                                        onChange={(e) => setVapiKey(e.target.value)}
+                                    />
+                                </div>
+                                <Button onClick={handleSaveApiKey} disabled={saving}>
+                                    {saving ? "Saving..." : "Update"}
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Your private key is used to fetch call data from Vapi.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            <Label>Webhook Endpoint URL</Label>
+                            <div className="flex items-center space-x-2">
+                                <Input value={data.webhookUrl} readOnly className="bg-muted" />
+                                <Button variant="outline" size="icon" onClick={() => copyToClipboard(data.webhookUrl)}>
+                                    {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                Paste this into your Vapi Dashboard settings.
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="md:col-span-1">
                     <CardHeader>
                         <CardTitle>Access Control</CardTitle>
-                        <CardDescription>Your role and permissions in this organization.</CardDescription>
+                        <CardDescription>Your organization role and permissions.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex items-center justify-between border-b pb-4">
@@ -154,17 +230,16 @@ export default function SettingsPage() {
                                 <p className="font-medium">{data.profile.fullName}</p>
                                 <p className="text-sm text-muted-foreground">{data.profile.role}</p>
                             </div>
-                            <Badge>{data.profile.role}</Badge>
+                            <Badge variant="outline">{data.profile.role}</Badge>
                         </div>
                         <div className="pt-4">
                             <h4 className="text-sm font-semibold mb-2">Sharable Dashboard Link</h4>
                             <div className="flex items-center space-x-2">
-                                <Input value={`${window.location.origin}/dashboard`} readOnly />
-                                <Button variant="outline" size="sm">Share</Button>
+                                <Input value={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard`} readOnly className="bg-muted text-xs" />
+                                <Button variant="outline" size="sm" onClick={() => copyToClipboard(`${window.location.origin}/dashboard`)}>
+                                    Copy Link
+                                </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Users with "Client" role will see a read-only version of this link.
-                            </p>
                         </div>
                     </CardContent>
                 </Card>
