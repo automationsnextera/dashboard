@@ -18,35 +18,45 @@ interface Call {
 
 export default function DashboardPage() {
     const { isMissingKey } = useVapi()
-    const [calls, setCalls] = useState<Call[]>([])
+    const [stats, setStats] = useState<{
+        kpis: any;
+        chartData: any[];
+        pieData: any[];
+        recentCalls: any[];
+    } | null>(null)
     const [loading, setLoading] = useState(true)
+    const [days, setDays] = useState(7)
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
         setIsMounted(true)
-        const fetchCalls = async () => {
+        const fetchStats = async () => {
+            setLoading(true)
             try {
-                const res = await fetch("/api/vapi/calls")
+                const res = await fetch(`/api/dashboard/stats?days=${days}`)
                 if (res.ok) {
                     const data = await res.json()
-                    setCalls(Array.isArray(data) ? data : [])
-                } else {
-                    console.error("Failed to fetch calls")
+                    setStats(data)
                 }
             } catch (error) {
-                console.error("Error fetching calls:", error)
+                console.error("Error fetching stats:", error)
             } finally {
                 setLoading(false)
             }
         }
-        fetchCalls()
-    }, [])
+        fetchStats()
+    }, [days])
 
-    // Metrics
-    const totalCalls = calls.length
-    const totalSpend = calls.reduce((sum, call) => sum + (call.cost || 0), 0)
-    const totalDurationSeconds = calls.reduce((sum, call) => sum + (call.duration || 0), 0)
-    const avgDurationSeconds = totalCalls > 0 ? totalDurationSeconds / totalCalls : 0
+    if (loading && !stats) {
+        return <div className="p-8 text-center text-muted-foreground">Loading dashboard...</div>
+    }
+
+    const { kpis, chartData, pieData, recentCalls } = stats || {
+        kpis: { totalCalls: 0, totalSpend: 0, avgDuration: 0, successRate: 0 },
+        chartData: [],
+        pieData: [],
+        recentCalls: []
+    }
 
     const formatDuration = (seconds: number) => {
         const minutes = Math.floor(seconds / 60)
@@ -54,49 +64,23 @@ export default function DashboardPage() {
         return `${minutes}m ${remainingSeconds}s`
     }
 
-    // Chart Data Preparation
-    const statusCounts = calls.reduce((acc, call) => {
-        const status = call.status || 'unknown';
-        acc[status] = (acc[status] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    const pieData = Object.keys(statusCounts).map(status => ({
-        name: status,
-        value: statusCounts[status]
-    }));
-
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
-    // Calls per day (last 7 days approx)
-    const callsPerDay = calls.reduce((acc, call) => {
-        const date = new Date(call.startedAt).toLocaleDateString();
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
-
-    // Sort dates
-    const lineData = Object.keys(callsPerDay)
-        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
-        .slice(-7) // Last 7 days available
-        .map(date => ({
-            date,
-            calls: callsPerDay[date]
-        }));
-
-
-    const recentCalls = [...calls].sort((a, b) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
-    ).slice(0, 5)
-
-    if (loading) {
-        return <div className="p-8 text-center text-muted-foreground">Loading dashboard...</div>
-    }
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Dashboard Overview</h2>
+                <div className="flex items-center space-x-2">
+                    <select
+                        value={days}
+                        onChange={(e) => setDays(Number(e.target.value))}
+                        className="flex h-9 w-[180px] rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                        <option value={7}>Last 7 days</option>
+                        <option value={30}>Last 30 days</option>
+                        <option value={90}>Last 90 days</option>
+                    </select>
+                </div>
             </div>
 
             {isMissingKey && (
@@ -129,7 +113,7 @@ export default function DashboardPage() {
                         <Phone className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{totalCalls}</div>
+                        <div className="text-2xl font-bold">{kpis.totalCalls}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -138,7 +122,7 @@ export default function DashboardPage() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${totalSpend.toFixed(2)}</div>
+                        <div className="text-2xl font-bold">${kpis.totalSpend.toFixed(2)}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -147,7 +131,7 @@ export default function DashboardPage() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{formatDuration(avgDurationSeconds)}</div>
+                        <div className="text-2xl font-bold">{formatDuration(kpis.avgDuration)}</div>
                     </CardContent>
                 </Card>
                 <Card>
@@ -156,9 +140,7 @@ export default function DashboardPage() {
                         <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            {totalCalls > 0 ? ((statusCounts['completed'] || 0) / totalCalls * 100).toFixed(0) : 0}%
-                        </div>
+                        <div className="text-2xl font-bold">{kpis.successRate.toFixed(0)}%</div>
                     </CardContent>
                 </Card>
             </div>
@@ -172,11 +154,12 @@ export default function DashboardPage() {
                         <div className="h-[300px]">
                             {isMounted ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={lineData}>
+                                    <LineChart data={chartData}>
                                         <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                                         <Tooltip />
                                         <Line type="monotone" dataKey="calls" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                                        <Line type="monotone" dataKey="spend" stroke="#10b981" strokeWidth={2} />
                                     </LineChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -204,7 +187,7 @@ export default function DashboardPage() {
                                             paddingAngle={5}
                                             dataKey="value"
                                         >
-                                            {pieData.map((entry, index) => (
+                                            {pieData.map((entry: any, index: number) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
@@ -216,7 +199,7 @@ export default function DashboardPage() {
                             )}
                         </div>
                         <div className="flex justify-center gap-4 text-sm text-muted-foreground">
-                            {pieData.map((entry, index) => (
+                            {pieData.map((entry: any, index: number) => (
                                 <div key={entry.name} className="flex items-center gap-1">
                                     <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                                     <span>{entry.name}</span>
@@ -237,7 +220,7 @@ export default function DashboardPage() {
                         {recentCalls.length === 0 ? (
                             <div className="text-sm text-muted-foreground">No recent calls found.</div>
                         ) : (
-                            recentCalls.map((call) => (
+                            recentCalls.map((call: any) => (
                                 <div key={call.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                                     <div className="space-y-1">
                                         <p className="text-sm font-medium leading-none">

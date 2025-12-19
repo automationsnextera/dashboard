@@ -19,6 +19,8 @@ interface ProfileFormProps {
         use_case: string | null;
         avatar_url: string | null;
         vapi_api_key?: string | null;
+        client_id?: string | null;
+        role?: string | null;
     };
     onSave?: () => void;
 }
@@ -70,19 +72,37 @@ export default function ProfileForm({ user, initialData, onSave }: ProfileFormPr
         setLoading(true);
 
         try {
-            // Save Profile
+            let currentClientId = initialData?.client_id;
+
+            // 1. Create a Client if one doesn't exist
+            if (!currentClientId) {
+                // Generate a slug from company name
+                const slug = companyName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]/g, '');
+
+                const { data: newClient, error: clientError } = await supabase.from('clients').insert({
+                    name: companyName,
+                    slug: `${slug}-${Math.random().toString(36).substring(2, 7)}`,
+                }).select().single();
+
+                if (clientError) throw clientError;
+                currentClientId = newClient.id;
+            }
+
+            // 2. Save/Update Profile
             const { error: profileError } = await supabase.from('profiles').upsert({
                 id: user.id,
                 full_name: fullName,
                 company_name: companyName,
                 use_case: useCase,
                 avatar_url: avatarUrl,
+                client_id: currentClientId,
+                role: 'Owner', // First user is the owner
                 updated_at: new Date().toISOString(),
             });
 
             if (profileError) throw profileError;
 
-            // Save Vapi API Key
+            // 3. Save Vapi API Key
             if (vapiKey) {
                 const { error: settingsError } = await supabase.from('user_settings').upsert({
                     user_id: user.id,

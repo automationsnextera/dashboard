@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, Phone, Users, Settings } from "lucide-react"
@@ -11,6 +12,22 @@ type SidebarProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname()
+    const [clientName, setClientName] = useState("Vapi Dashboard")
+
+    useEffect(() => {
+        const fetchClient = async () => {
+            try {
+                const res = await fetch("/api/dashboard/settings")
+                if (res.ok) {
+                    const data = await res.json()
+                    setClientName(data.client.name)
+                }
+            } catch (error) {
+                console.error("Error fetching client for sidebar:", error)
+            }
+        }
+        fetchClient()
+    }, [])
 
     const routes = [
         {
@@ -44,7 +61,7 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="space-y-4 py-4">
                 <div className="px-3 py-2">
                     <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-                        NextEra Automations
+                        {clientName}
                     </h2>
                     <div className="space-y-1">
                         {routes.map((route) => (
