@@ -8,6 +8,13 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Add this block to ignore server-side API paths during static export
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.externals = [...(config.externals || []), 'vapi'];
+    }
+    return config;
+  },
   async headers() {
     return [
       {
